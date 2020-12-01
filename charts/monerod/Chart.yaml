@@ -1,0 +1,17 @@
+apiVersion: v2
+name: monerod
+description: Helm chart for monerod, a cryptocurrency platofmr designed for true anonymity.
+
+version: 0.1.0
+appVersion: "v0.17"
+
+home: https://github.com/jalavosus/helm-charts
+
+maintainers:
+  - name: James Alavosus
+    email: alavosus.james@gmail.com
+    url: https://github.com/jalavosus
+
+sources:
+  - https://github.com/jalavosus/helm-charts
+

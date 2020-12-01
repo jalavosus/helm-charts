@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "monerod.fullname" . }}
+  labels:
+    {{- include "monerod.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: rpc
+      port: {{ .Values.monerod.rpc.port }}
+      targetPort: p2p
+      protocol: TCP
+    - name: p2p
+      port: {{ .Values.monerod.p2p.port }}
+      targetPort: p2p
+      protocol: TCP
+  selector:
+    {{- include "monerod.selectorLabels" . | nindent 4 }}

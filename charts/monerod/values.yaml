@@ -1,0 +1,78 @@
+# Default values for monerod.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: jalavosus/monerod
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "release-v0.17"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+persistence:
+  enabled: true
+  existingClaim: ""
+  accessMode: ReadWriteOnce
+  size: 50Gi
+  storageClass: "standard"
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+arguments:
+  - monerod
+  - --non-interactive
+  - --config-file=/data/.monerod/monerod.conf
+
+monerod:
+  p2p:
+    ip: 0.0.0.0
+    port: 18080
+  rpc:
+    ip: 0.0.0.0
+    port: 18081
+    confirmExternalBind: true
+    restrictedRpc: true
+  outPeers: 64
+  dataDir: "/data/.monerod/"
+
+configurationFile:
+  monerod.conf: |-
+    data-dir=/data/.monerod
+    log-file=/var/log/monero/monerod.log
+
+    # p2p full node
+    p2p-bind-ip=0.0.0.0
+    p2p-bind-port=18080
+
+    # rpc open node
+    rpc-bind-ip=0.0.0.0
+    rpc-bind-port=18081
+    confirm-external-bind=1
+    restricted-rpc=1
+
+    out-peers=64
+
+service:
+  type: ClusterIP
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

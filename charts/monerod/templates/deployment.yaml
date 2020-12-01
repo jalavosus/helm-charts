@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "monerod.fullname" . }}
+  labels:
+    {{- include "monerod.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "monerod.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "monerod.selectorLabels" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if .Values.configurationFile }}
+      initContainers:
+        - name: copy-monerod-config
+          image: busybox
+          command: ['sh', '-c', 'cp /configmap/monerod.conf {{ .Values.monerod.dataDir }}monerod.conf']
+          volumeMounts:
+            - name: configmap
+              mountPath: /configmap
+            - name: data
+              mountPath: {{ .Values.monerod.dataDir }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "monerod.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.arguments }}
+          args:
+          {{  range .Values.arguments }}
+            - {{ . }}
+          {{ end }}
+          {{- end }}
+          ports:
+            - name: rpc
+              containerPort: {{ .Values.monerod.rpc.port }}
+              protocol: TCP
+            - name: p2p
+              containerPort: {{ .Values.monerod.p2p.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.monerod.dataDir }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- if .Values.configurationFile }}
+        - name: config
+          emptyDir: {}
+        - name: configmap
+          configMap:
+            name: {{ template "monerod.fullname" . }}
+        {{- end }}
+        - name: data
+        {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (include "monerod.fullname" .) }}
+        {{- else }}
+          emptyDir: {}
+        {{- end -}}
